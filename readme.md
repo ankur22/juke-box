@@ -34,3 +34,20 @@ ExecStart=/usr/bin/python3 /home/<enter-user-name>/main.py
 [Install]
 WantedBy=multi-user.target
 ```
+
+## Setup grafana-agent
+
+To be able to scrap the metrics from this running service, add this under `metrics`->`configs`:
+
+```bash
+  - name: service
+    scrape_configs:
+      - job_name: self-scrape
+        static_configs:
+          - targets: ['localhost:8000']
+    remote_write:
+    - basic_auth:
+        password: <add-password>
+        username: <add-username>
+      url: <add-prom-remote-url>
+```
