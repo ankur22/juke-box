@@ -2,6 +2,8 @@ import time
 import board
 from adafruit_neotrellis.neotrellis import NeoTrellis
 import spotify
+import signal
+import sys
 
 # create the i2c object for the trellis
 i2c_bus = board.I2C()  # uses board.SCL and board.SDA
@@ -95,7 +97,12 @@ def start():
         # the trellis can only be read every 17 millisecons or so
         time.sleep(0.02)
 
+
+def sigterm_handler(_signo, _stack_frame):
+    sys.exit(0)
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, sigterm_handler)
     try:
         init()
         is_init = False
