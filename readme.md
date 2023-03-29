@@ -17,3 +17,20 @@ Create a `songs` file where the format should look like this with 16 songs:
 The Big Ship Sails on the Ally Ally Oh=spotify:track:4yfOLQspU8ELGOjWeck8oN
 ...
 ```
+
+## Create a service
+
+```bash
+[Unit]
+Description=This is the juke box app that works with NeoTrellis
+After=multi-user.target
+
+[Service]
+WorkingDirectory=/home/<enter-user-name>/
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 /home/<enter-user-name>/main.py
+
+[Install]
+WantedBy=multi-user.target
+```
