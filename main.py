@@ -14,14 +14,27 @@ trellis = NeoTrellis(i2c_bus)
 # Set the brightness value (0 to 1.0)
 trellis.brightness = 0.1
 
-# some color definitions
+# Light off
 OFF = (0, 0, 0)
-RED = (255, 0, 0)
-YELLOW = (255, 150, 0)
-GREEN = (0, 255, 0)
-CYAN = (0, 255, 255)
-BLUE = (0, 0, 255)
-PURPLE = (180, 0, 255)
+
+colors = [
+    (255, 0, 0),       # Red
+    (255, 85, 0),      # Orange
+    (255, 170, 0),     # Yellow-Orange
+    (255, 255, 0),     # Yellow
+    (170, 255, 0),     # Yellow-Green
+    (85, 255, 0),      # Green
+    (0, 255, 0),       # Pure Green
+    (0, 255, 85),      # Cyan-Green
+    (0, 255, 170),     # Cyan
+    (0, 255, 255),     # Pure Cyan
+    (0, 170, 255),     # Light Blue
+    (0, 85, 255),      # Blue
+    (0, 0, 255),       # Pure Blue
+    (85, 0, 255),      # Violet
+    (170, 0, 255),     # Purple
+    (255, 0, 255),     # Magenta
+]
 
 sp = spotify.init()
 songs = spotify.get_songs(sp)
@@ -32,7 +45,7 @@ is_init = True
 def blink(event):
     # turn the LED on when a rising edge is detected
     if event.edge == NeoTrellis.EDGE_RISING:
-        trellis.pixels[event.number] = CYAN
+        trellis.pixels[event.number] = colors[event.number]
     # turn the LED off when a falling edge is detected
     elif event.edge == NeoTrellis.EDGE_FALLING:
         trellis.pixels[event.number] = OFF
@@ -49,7 +62,7 @@ for i in range(16):
     trellis.callbacks[i] = blink
 
     # cycle the LEDs on startup
-    trellis.pixels[i] = PURPLE
+    trellis.pixels[i] = colors[i]
     time.sleep(0.05)
 
 is_init = False
