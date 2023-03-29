@@ -1,6 +1,5 @@
 import time
 import board
-import busio
 from adafruit_neotrellis.neotrellis import NeoTrellis
 import spotify
 
@@ -53,26 +52,54 @@ def blink(event):
             spotify.play(sp, songs[event.number])
 
 
-for i in range(16):
-    # activate rising edge events on all keys
-    trellis.activate_key(i, NeoTrellis.EDGE_RISING)
-    # activate falling edge events on all keys
-    trellis.activate_key(i, NeoTrellis.EDGE_FALLING)
-    # set all keys to trigger the blink callback
-    trellis.callbacks[i] = blink
+def init():
+    for i in range(16):
+        # activate rising edge events on all keys
+        trellis.activate_key(i, NeoTrellis.EDGE_RISING)
+        # activate falling edge events on all keys
+        trellis.activate_key(i, NeoTrellis.EDGE_FALLING)
+        # set all keys to trigger the blink callback
+        trellis.callbacks[i] = blink
 
-    # cycle the LEDs on startup
-    trellis.pixels[i] = colors[i]
-    time.sleep(0.05)
+        # cycle the LEDs on startup
+        trellis.pixels[i] = colors[i]
+        time.sleep(0.05)
 
-is_init = False
+    for i in range(16):
+        trellis.pixels[i] = OFF
+        time.sleep(0.05)
 
-for i in range(16):
-    trellis.pixels[i] = OFF
-    time.sleep(0.05)
+def stop():
+    for i in range(16):
+        j = 15-i
+        # activate rising edge events on all keys
+        trellis.activate_key(j, NeoTrellis.EDGE_RISING)
+        # activate falling edge events on all keys
+        trellis.activate_key(j, NeoTrellis.EDGE_FALLING)
+        # set all keys to trigger the blink callback
+        trellis.callbacks[j] = blink
 
-while True:
-    # call the sync function call any triggered callbacks
-    trellis.sync()
-    # the trellis can only be read every 17 millisecons or so
-    time.sleep(0.02)
+        # cycle the LEDs on startup
+        trellis.pixels[j] = colors[j]
+        time.sleep(0.05)
+
+    for i in range(16):
+        j = 15-i
+        trellis.pixels[j] = OFF
+        time.sleep(0.05)
+
+def start():
+    while True:
+        # call the sync function call any triggered callbacks
+        trellis.sync()
+        # the trellis can only be read every 17 millisecons or so
+        time.sleep(0.02)
+
+if __name__ == '__main__':
+    try:
+        init()
+        is_init = False
+        start()
+    finally:
+        stop()
+        print("shutting down")
