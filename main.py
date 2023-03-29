@@ -2,6 +2,7 @@ import time
 import board
 from adafruit_neotrellis.neotrellis import NeoTrellis
 import spotify
+from prometheus_client import start_http_server
 import signal
 import sys
 
@@ -104,6 +105,7 @@ def sigterm_handler(_signo, _stack_frame):
 if __name__ == '__main__':
     signal.signal(signal.SIGTERM, sigterm_handler)
     try:
+        start_http_server(8000)
         init()
         is_init = False
         start()

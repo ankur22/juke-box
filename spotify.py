@@ -2,6 +2,9 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import os
 import random
+from prometheus_client import Counter
+
+interaction_total_counter = Counter('raspberrypi_jukebox_total', 'The total number of times juke box has been interacted with', ['method', 'id'])
 
 market = "GB"
 
@@ -73,22 +76,26 @@ def __control_player(sp, cp, current_uri):
     living_room_device_id = os.environ['LIVING_ROOM_DEVICE_ID']
 
     if cp is None or cp["is_playing"] is None:
-        print("playing")
+        print("play")
+        interaction_total_counter.labels('play', current_uri).inc()
         sp.start_playback(device_id=living_room_device_id, uris=[current_uri])
         return
     
     same = cp["item"] is not None and cp["item"]["uri"] is not None and cp["item"]["uri"] == current_uri
 
     if cp["is_playing"] is True and same is True:
-        print("pausing")
+        print("pause")
+        interaction_total_counter.labels('pause', current_uri).inc()
         sp.pause_playback(device_id=living_room_device_id)
         return
 
     if same:
-        print("resuming")
+        print("resume")
+        interaction_total_counter.labels('resume', current_uri).inc()
         sp.start_playback(device_id=living_room_device_id, uris=[current_uri], position_ms=cp["progress_ms"])
         return
 
-    print("playing")
+    print("play")
+    interaction_total_counter.labels('play', current_uri).inc()
     sp.start_playback(device_id=living_room_device_id, uris=[current_uri])
 
