@@ -3,10 +3,13 @@ from spotipy.oauth2 import SpotifyOAuth
 import os
 import random
 from prometheus_client import Counter
+from datetime import datetime
 
 interaction_total_counter = Counter('raspberrypi_jukebox_total', 'The total number of times juke box has been interacted with', ['method', 'id'])
 
 market = "GB"
+is_playing = False
+start = datetime.fromtimestamp(0)
 
 def init():
     with open("secrets") as file:
@@ -46,6 +49,8 @@ def get_songs(sp):
             ss = line.split("=")
             songs.append(ss[1])
 
+    global market
+
     for s in songs:
         if "playlist" in s:
             playlist = sp.playlist(playlist_id=s, market=market)
@@ -59,8 +64,9 @@ def get_songs(sp):
     
     return songs
 
-
 def play(sp, current_uri):
+    global market
+
     cp = sp.current_playback(market=market)
 
     if "playlist" in current_uri:
@@ -73,12 +79,18 @@ def play(sp, current_uri):
 
 
 def __control_player(sp, cp, current_uri):
+    global is_playing
+    
     living_room_device_id = os.environ['LIVING_ROOM_DEVICE_ID']
 
     if cp is None or cp["is_playing"] is None:
+        if __can_play(is_playing, True) is False:
+            interaction_total_counter.labels('skipped', current_uri).inc()
+            return
         print("play")
         interaction_total_counter.labels('play', current_uri).inc()
         sp.start_playback(device_id=living_room_device_id, uris=[current_uri])
+        is_playing = True
         return
     
     same = cp["item"] is not None and cp["item"]["uri"] is not None and cp["item"]["uri"] == current_uri
@@ -87,15 +99,35 @@ def __control_player(sp, cp, current_uri):
         print("pause")
         interaction_total_counter.labels('pause', current_uri).inc()
         sp.pause_playback(device_id=living_room_device_id)
+        is_playing = False
         return
 
     if same:
         print("resume")
         interaction_total_counter.labels('resume', current_uri).inc()
         sp.start_playback(device_id=living_room_device_id, uris=[current_uri], position_ms=cp["progress_ms"])
+        is_playing = False
         return
 
+    if __can_play(is_playing, True) is False:
+        interaction_total_counter.labels('skipped', current_uri).inc()
+        return
     print("play")
     interaction_total_counter.labels('play', current_uri).inc()
     sp.start_playback(device_id=living_room_device_id, uris=[current_uri])
+    is_playing = True
 
+
+def __can_play(play_is_current_action, want_to_play):
+    global start
+    global is_playing
+
+    now = datetime.now()
+    difference = now - start
+    if play_is_current_action is True and want_to_play is True and difference.seconds < 10:
+        print("10 secs not passed")
+        return False
+    
+    start = datetime.now()
+
+    return True
