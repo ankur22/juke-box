@@ -10,6 +10,7 @@ interaction_total_counter = Counter('raspberrypi_jukebox_total', 'The total numb
 market = "GB"
 is_playing = False
 start = datetime.fromtimestamp(0)
+living_room_device = None
 
 def init():
     with open("secrets") as file:
@@ -22,13 +23,13 @@ def init():
 
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
-    living_room_device = None
+    global living_room_device
 
-    living_room_device_id = os.environ['LIVING_ROOM_DEVICE_ID']
+    living_room_device_name = os.environ['LIVING_ROOM_DEVICE_NAME']
 
     devices = sp.devices()
     for d in devices["devices"]:
-        if d["id"] != living_room_device_id:
+        if d["name"] != living_room_device_name:
             continue
         living_room_device = d
         break
@@ -80,8 +81,7 @@ def play(sp, current_uri):
 
 def __control_player(sp, cp, current_uri):
     global is_playing
-    
-    living_room_device_id = os.environ['LIVING_ROOM_DEVICE_ID']
+    global living_room_device
 
     if cp is None or cp["is_playing"] is None:
         if __can_play(is_playing, True) is False:
@@ -89,7 +89,7 @@ def __control_player(sp, cp, current_uri):
             return
         print("play")
         interaction_total_counter.labels('play', current_uri).inc()
-        sp.start_playback(device_id=living_room_device_id, uris=[current_uri])
+        sp.start_playback(device_id=living_room_device["id"], uris=[current_uri])
         is_playing = True
         return
     
@@ -98,14 +98,14 @@ def __control_player(sp, cp, current_uri):
     if cp["is_playing"] is True and same is True:
         print("pause")
         interaction_total_counter.labels('pause', current_uri).inc()
-        sp.pause_playback(device_id=living_room_device_id)
+        sp.pause_playback(device_id=living_room_device["id"])
         is_playing = False
         return
 
     if same:
         print("resume")
         interaction_total_counter.labels('resume', current_uri).inc()
-        sp.start_playback(device_id=living_room_device_id, uris=[current_uri], position_ms=cp["progress_ms"])
+        sp.start_playback(device_id=living_room_device["id"], uris=[current_uri], position_ms=cp["progress_ms"])
         is_playing = False
         return
 
@@ -114,7 +114,7 @@ def __control_player(sp, cp, current_uri):
         return
     print("play")
     interaction_total_counter.labels('play', current_uri).inc()
-    sp.start_playback(device_id=living_room_device_id, uris=[current_uri])
+    sp.start_playback(device_id=living_room_device["id"], uris=[current_uri])
     is_playing = True
 
 
