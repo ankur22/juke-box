@@ -114,8 +114,8 @@ def __can_play(play_is_current_action, want_to_play):
 
     now = datetime.now()
     difference = now - start
-    if play_is_current_action is True and want_to_play is True and difference.seconds < 10:
-        print("10 secs not passed")
+    if play_is_current_action is True and want_to_play is True and difference.seconds < 5:
+        print("5 secs not passed")
         return False
     
     start = datetime.now()
