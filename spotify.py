@@ -95,13 +95,6 @@ def __control_player(sp, cp, current_uri):
     
     same = cp["item"] is not None and cp["item"]["uri"] is not None and cp["item"]["uri"] == current_uri
 
-    if cp["is_playing"] is True and same is True:
-        print("pause")
-        interaction_total_counter.labels('pause', current_uri).inc()
-        sp.pause_playback(device_id=living_room_device["id"])
-        is_playing = False
-        return
-
     if same:
         print("resume")
         interaction_total_counter.labels('resume', current_uri).inc()
