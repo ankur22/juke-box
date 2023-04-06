@@ -92,15 +92,6 @@ def __control_player(sp, cp, current_uri):
         sp.start_playback(device_id=living_room_device["id"], uris=[current_uri])
         is_playing = True
         return
-    
-    same = cp["item"] is not None and cp["item"]["uri"] is not None and cp["item"]["uri"] == current_uri
-
-    if same:
-        print("resume")
-        interaction_total_counter.labels('resume', current_uri).inc()
-        sp.start_playback(device_id=living_room_device["id"], uris=[current_uri], position_ms=cp["progress_ms"])
-        is_playing = False
-        return
 
     if __can_play(is_playing, True) is False:
         interaction_total_counter.labels('ignored', current_uri).inc()
