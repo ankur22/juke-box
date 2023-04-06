@@ -85,7 +85,7 @@ def __control_player(sp, cp, current_uri):
 
     if cp is None or cp["is_playing"] is None:
         if __can_play(is_playing, True) is False:
-            interaction_total_counter.labels('skipped', current_uri).inc()
+            interaction_total_counter.labels('ignored', current_uri).inc()
             return
         print("play")
         interaction_total_counter.labels('play', current_uri).inc()
@@ -110,7 +110,7 @@ def __control_player(sp, cp, current_uri):
         return
 
     if __can_play(is_playing, True) is False:
-        interaction_total_counter.labels('skipped', current_uri).inc()
+        interaction_total_counter.labels('ignored', current_uri).inc()
         return
     print("play")
     interaction_total_counter.labels('play', current_uri).inc()
