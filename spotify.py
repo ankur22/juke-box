@@ -93,6 +93,12 @@ def __control_player(sp, cp, current_uri):
         is_playing = True
         return
 
+    same = cp["item"] is not None and cp["item"]["uri"] is not None and cp["item"]["uri"] == current_uri
+    if same:
+        print("same")
+        interaction_total_counter.labels('same', current_uri).inc()
+        return
+
     if __can_play(is_playing, True) is False:
         interaction_total_counter.labels('ignored', current_uri).inc()
         return
