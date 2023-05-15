@@ -18,6 +18,8 @@ The Big Ship Sails on the Ally Ally Oh=spotify:track:4yfOLQspU8ELGOjWeck8oN
 ...
 ```
 
+You'll need to login to spotify, or copy the .cache file from an existing install.
+
 ## Create a service
 
 ```bash
