@@ -20,6 +20,8 @@ The Big Ship Sails on the Ally Ally Oh=spotify:track:4yfOLQspU8ELGOjWeck8oN
 
 You'll need to login to spotify, or copy the .cache file from an existing install.
 
+Install all the dependencies that are in requirements.txt when logged in as root.
+
 ## Create a service
 
 ```bash
