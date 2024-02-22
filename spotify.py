@@ -77,22 +77,23 @@ def get_songs(sp):
 def play(sp, song: Song):
     global market
 
-    cp = sp.current_playback(market=market)
-
     if "playlist" in song.uri:
         playlist = sp.playlist(playlist_id=song.uri, market=market)
         playlist_songs = playlist["tracks"]["items"]
         index = 0
         if song.random:
             index = random.randint(0, len(playlist_songs)-1)
-        __control_player(sp, cp, playlist_songs[index]["track"]["uri"])
+        __control_player(sp, playlist_songs[index]["track"]["uri"])
     else:
-        __control_player(sp, cp, song.uri)
+        __control_player(sp, song.uri)
 
 
-def __control_player(sp, cp, current_uri):
+def __control_player(sp, current_uri):
     global is_playing
     global living_room_device
+    global market
+
+    cp = sp.current_playback(market=market)
 
     if cp is None or cp["is_playing"] is None:
         if __can_play(is_playing, True) is False:
