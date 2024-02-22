@@ -8,15 +8,15 @@ from datetime import datetime
 interaction_total_counter = Counter('raspberrypi_jukebox_total', 'The total number of times juke box has been interacted with', ['method', 'id'])
 
 market = "GB"
-is_playing = False
 start = datetime.fromtimestamp(0)
 living_room_device = None
 
 class Song:
-  def __init__(self, name, random, uri):
+  def __init__(self, name, random, uri, playlist):
     self.name = name
     self.random = random
     self.uri = uri
+    self.playlist = playlist
 
 def init():
     with open("secrets") as file:
@@ -54,15 +54,14 @@ def get_songs(sp):
         for line in file:
             line = line.rstrip()
             ss = line.split("=")
-            if ss[1] == "random":
-                songs.append(Song(ss[0], True, ss[2]))
-            else:
-                songs.append(Song(ss[0], False, ss[2]))
+            ran = ss[1] == "random"
+            pl = "playlist" in ss[2]
+            songs.append(Song(ss[0], ran, ss[2], pl))
 
     global market
 
     for s in songs:
-        if "playlist" in s.uri:
+        if s.playlist:
             playlist = sp.playlist(playlist_id=s.uri, market=market)
             print(playlist["name"])
         else:
@@ -74,59 +73,45 @@ def get_songs(sp):
     
     return songs
 
+
 def play(sp, song: Song):
+    if __is_disabled() is False:
+        interaction_total_counter.labels('ignored', song.uri).inc()
+        return
+    
     global market
 
-    if "playlist" in song.uri:
+    offset = 0
+    if song.playlist and song.random:
         playlist = sp.playlist(playlist_id=song.uri, market=market)
         playlist_songs = playlist["tracks"]["items"]
-        index = 0
-        if song.random:
-            index = random.randint(0, len(playlist_songs)-1)
-        __control_player(sp, playlist_songs[index]["track"]["uri"])
-    else:
-        __control_player(sp, song.uri)
+        offset = random.randint(0, len(playlist_songs)-1)
 
+    # This doesn't work but left in for now incase we can get it to work again.
+    # same = cp["item"] is not None and cp["item"]["uri"] is not None and cp["item"]["uri"] == current_uri
+    # if same:
+    #     print("same")
+    #     interaction_total_counter.labels('same', song.uri).inc()
+    #     return
 
-def __control_player(sp, current_uri):
-    global is_playing
     global living_room_device
-    global market
 
-    cp = sp.current_playback(market=market)
-
-    if cp is None or cp["is_playing"] is None:
-        if __can_play(is_playing, True) is False:
-            interaction_total_counter.labels('ignored', current_uri).inc()
-            return
-        print("play")
-        interaction_total_counter.labels('play', current_uri).inc()
-        sp.start_playback(device_id=living_room_device["id"], uris=[current_uri])
-        is_playing = True
-        return
-
-    same = cp["item"] is not None and cp["item"]["uri"] is not None and cp["item"]["uri"] == current_uri
-    if same:
-        print("same")
-        interaction_total_counter.labels('same', current_uri).inc()
-        return
-
-    if __can_play(is_playing, True) is False:
-        interaction_total_counter.labels('ignored', current_uri).inc()
-        return
+    interaction_total_counter.labels('play', song.uri).inc()
+    if song.playlist:
+        sp.start_playback(device_id=living_room_device["id"], context_uri=song.uri, offset={ "position": offset})
+    else:
+        sp.start_playback(device_id=living_room_device["id"], uris=[song.uri])
     print("play")
-    interaction_total_counter.labels('play', current_uri).inc()
-    sp.start_playback(device_id=living_room_device["id"], uris=[current_uri])
-    is_playing = True
+
+    return
 
 
-def __can_play(play_is_current_action, want_to_play):
+def __is_disabled():
     global start
-    global is_playing
 
     now = datetime.now()
     difference = now - start
-    if play_is_current_action is True and want_to_play is True and difference.seconds < 5:
+    if difference.seconds < 5:
         print("5 secs not passed")
         return False
     
