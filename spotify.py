@@ -12,6 +12,12 @@ is_playing = False
 start = datetime.fromtimestamp(0)
 living_room_device = None
 
+class Song:
+  def __init__(self, name, random, uri):
+    self.name = name
+    self.random = random
+    self.uri = uri
+
 def init():
     with open("secrets") as file:
         for line in file:
@@ -48,16 +54,19 @@ def get_songs(sp):
         for line in file:
             line = line.rstrip()
             ss = line.split("=")
-            songs.append(ss[1])
+            if ss[1] == "random":
+                songs.append(Song(ss[0], True, ss[2]))
+            else:
+                songs.append(Song(ss[0], False, ss[2]))
 
     global market
 
     for s in songs:
-        if "playlist" in s:
-            playlist = sp.playlist(playlist_id=s, market=market)
+        if "playlist" in s.uri:
+            playlist = sp.playlist(playlist_id=s.uri, market=market)
             print(playlist["name"])
         else:
-            track = sp.track(track_id=s)
+            track = sp.track(track_id=s.uri)
             print(track["name"])
             for a in track["artists"]:
                 print(a["name"])
@@ -65,18 +74,20 @@ def get_songs(sp):
     
     return songs
 
-def play(sp, current_uri):
+def play(sp, song: Song):
     global market
 
     cp = sp.current_playback(market=market)
 
-    if "playlist" in current_uri:
-        playlist = sp.playlist(playlist_id=current_uri, market=market)
+    if "playlist" in song.uri:
+        playlist = sp.playlist(playlist_id=song.uri, market=market)
         playlist_songs = playlist["tracks"]["items"]
-        index = random.randint(0, len(playlist_songs))
+        index = 0
+        if song.random:
+            index = random.randint(0, len(playlist_songs)-1)
         __control_player(sp, cp, playlist_songs[index]["track"]["uri"])
     else:
-        __control_player(sp, cp, current_uri)
+        __control_player(sp, cp, song.uri)
 
 
 def __control_player(sp, cp, current_uri):

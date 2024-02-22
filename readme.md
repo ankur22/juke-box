@@ -39,6 +39,18 @@ ExecStart=/usr/bin/python3 /home/<enter-user-name>/main.py
 WantedBy=multi-user.target
 ```
 
+Enable the service:
+
+```
+sudo systemctl enable juke-box.service
+```
+
+Start the service:
+
+```
+sudo systemctl start juke-box.service
+```
+
 ## Setup grafana-agent
 
 To be able to scrap the metrics from this running service, add this under `metrics`->`configs`:
