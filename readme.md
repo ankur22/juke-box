@@ -18,9 +18,28 @@ The Big Ship Sails on the Ally Ally Oh=spotify:track:4yfOLQspU8ELGOjWeck8oN
 ...
 ```
 
-You'll need to login to spotify, or copy the .cache file from an existing install.
+## Login
+
+You'll need to login to spotify, or copy the .cache file from an existing install. I did it on a system with a GUI so that when there is no `.cache` file present it will open up chrome to allow you to login.
+
+1. `source env/bin/activate`
+2. `pip install spotipy`
+3. `python login.py`
+4. Login via the web.
+5. Now you should have a `.cache` file.
+
+## Dependencies
+
+Needs python 3.10+.
 
 Install all the dependencies that are in requirements.txt when logged in as root.
+
+`pip install -r /path/to/requirements.txt`
+
+### Playlists
+
+They need to be created by someone, not [algorithmically generated](https://community.spotify.com/t5/Spotify-for-Developers/Extension-on-endpoint-quot-Get-Playlist-quot-for-Spotify-owned/td-p/6550856).
+
 
 ## Create a service
 
