@@ -53,7 +53,7 @@ def blink(event):
         trellis.pixels[event.number] = OFF
         if is_init == False:
             print(f"Button {event.number} released, calling play")
-            spotify.play(sp, songs[event.number])
+            spotify.play(sp, songs[event.number], event.number)
         else:
             print(f"Button {event.number} released but still initialising")
 

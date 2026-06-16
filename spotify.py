@@ -12,6 +12,7 @@ interaction_total_counter = Counter('raspberrypi_jukebox_total', 'The total numb
 market = "GB"
 start = datetime.fromtimestamp(0)
 _LIBRESPOT_ZEROCONF_PORT = 34987
+_active_button = None  # button index of the last started song
 
 class Song:
   def __init__(self, name, random, uri, playlist):
@@ -71,16 +72,7 @@ def _get_local_device_id():
         return None
 
 
-def play(sp, song: Song):
-    print(f"play() called: '{song.name}'")
-    if __is_disabled() is False:
-        interaction_total_counter.labels('ignored', song.uri).inc()
-        print("play() ignored: within 5 second cooldown")
-        return
-
-    global market
-
-    device_name = os.environ['LIVING_ROOM_DEVICE_NAME']
+def _find_device(sp, device_name):
     devices = sp.devices()
     print(f"Spotify devices: {[d['name'] for d in devices['devices']]}")
     device = next((d for d in devices["devices"] if d["name"] == device_name), None)
@@ -89,9 +81,55 @@ def play(sp, song: Song):
         local_id = _get_local_device_id()
         if local_id is None:
             print(f"Could not get local device ID. Is raspotify running? Select '{device_name}' in Spotify app to activate it.")
-            return
+            return None
         print(f"Using local device ID: {local_id}")
         device = {"id": local_id, "name": device_name}
+    return device
+
+
+def play(sp, song: Song, button_index: int):
+    global _active_button
+    print(f"play() called: '{song.name}' (button {button_index})")
+
+    device_name = os.environ['LIVING_ROOM_DEVICE_NAME']
+
+    # Check current Spotify playback state first — avoids a second API call
+    # for the toggle case and gives us authoritative is_playing status.
+    playback = sp.current_playback()
+    on_this_device = (
+        playback is not None and
+        playback.get("device", {}).get("name") == device_name
+    )
+
+    if button_index == _active_button and on_this_device:
+        # Same button: toggle pause / resume without the new-song cooldown.
+        device_id = playback["device"]["id"]
+        try:
+            if playback["is_playing"]:
+                sp.pause_playback(device_id=device_id)
+                interaction_total_counter.labels('pause', song.uri).inc()
+                print(f"paused: '{song.name}'")
+            else:
+                sp.start_playback(device_id=device_id)
+                interaction_total_counter.labels('resume', song.uri).inc()
+                print(f"resumed: '{song.name}'")
+        except spotipy.exceptions.SpotifyException as e:
+            print(f"Spotify API error toggling playback: {e}")
+        return
+
+    # Different button (or same button with device no longer active) — start a new song.
+    # Cooldown only guards against rapid same-button re-press when the device went
+    # inactive. Pressing a different button always works immediately.
+    if button_index == _active_button and __is_disabled() is False:
+        interaction_total_counter.labels('ignored', song.uri).inc()
+        print("play() ignored: within 5 second cooldown")
+        return
+
+    global market
+
+    device = _find_device(sp, device_name)
+    if device is None:
+        return
 
     offset = 0
     if song.playlist and song.random:
@@ -108,7 +146,9 @@ def play(sp, song: Song):
     except spotipy.exceptions.SpotifyException as e:
         print(f"Spotify API error: {e}")
         print(f"Device '{device_name}' may not be active yet — open Spotify and select it from the Connect menu first.")
+        _active_button = None
         return
+    _active_button = button_index
     print(f"play: '{song.name}' on '{device_name}'")
 
     return
