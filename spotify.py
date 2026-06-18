@@ -87,6 +87,16 @@ def _find_device(sp, device_name):
     return device
 
 
+def pause(sp):
+    try:
+        playback = sp.current_playback()
+        if playback and playback.get("is_playing"):
+            sp.pause_playback()
+            print("spotify: paused on shutdown")
+    except Exception as e:
+        print(f"spotify: could not pause on shutdown: {e}")
+
+
 def play(sp, song: Song, button_index: int):
     global _active_button
     print(f"play() called: '{song.name}' (button {button_index})")

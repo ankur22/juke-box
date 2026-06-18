@@ -43,8 +43,10 @@ def _spinner_loop(stop_event):
         for i in range(16):
             trellis.pixels[i] = OFF
         trellis.pixels[_SPINNER_BORDER[frame % n]]       = (255, 255, 255)
-        trellis.pixels[_SPINNER_BORDER[(frame - 1) % n]] = (100, 100, 100)
-        trellis.pixels[_SPINNER_BORDER[(frame - 2) % n]] = (40, 40, 40)
+        trellis.pixels[_SPINNER_BORDER[(frame - 1) % n]] = (180, 180, 180)
+        trellis.pixels[_SPINNER_BORDER[(frame - 2) % n]] = (100, 100, 100)
+        trellis.pixels[_SPINNER_BORDER[(frame - 3) % n]] = (45, 45, 45)
+        trellis.pixels[_SPINNER_BORDER[(frame - 4) % n]] = (15, 15, 15)
         frame += 1
         time.sleep(0.1)
     for i in range(16):
@@ -166,5 +168,7 @@ if __name__ == '__main__':
         is_init = False
         start()
     finally:
+        if sp is not None:
+            spotify.pause(sp)
         stop()
         print("shutting down")
