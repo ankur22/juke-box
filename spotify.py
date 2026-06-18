@@ -87,6 +87,16 @@ def _find_device(sp, device_name):
     return device
 
 
+def pause(sp):
+    try:
+        playback = sp.current_playback()
+        if playback and playback.get("is_playing"):
+            sp.pause_playback()
+            print("spotify: paused on shutdown")
+    except Exception as e:
+        print(f"spotify: could not pause on shutdown: {e}")
+
+
 def play(sp, song: Song, button_index: int):
     global _active_button
     print(f"play() called: '{song.name}' (button {button_index})")
@@ -104,18 +114,21 @@ def play(sp, song: Song, button_index: int):
     if button_index == _active_button and on_this_device:
         # Same button: toggle pause / resume without the new-song cooldown.
         device_id = playback["device"]["id"]
+        action = 'error'
         try:
             if playback["is_playing"]:
                 sp.pause_playback(device_id=device_id)
                 interaction_total_counter.labels('pause', song.uri).inc()
                 print(f"paused: '{song.name}'")
+                action = 'paused'
             else:
                 sp.start_playback(device_id=device_id)
                 interaction_total_counter.labels('resume', song.uri).inc()
                 print(f"resumed: '{song.name}'")
+                action = 'resumed'
         except spotipy.exceptions.SpotifyException as e:
             print(f"Spotify API error toggling playback: {e}")
-        return
+        return action
 
     # Different button (or same button with device no longer active) — start a new song.
     # Cooldown only guards against rapid same-button re-press when the device went
@@ -123,13 +136,13 @@ def play(sp, song: Song, button_index: int):
     if button_index == _active_button and __is_disabled() is False:
         interaction_total_counter.labels('ignored', song.uri).inc()
         print("play() ignored: within 5 second cooldown")
-        return
+        return 'ignored'
 
     global market
 
     device = _find_device(sp, device_name)
     if device is None:
-        return
+        return 'error'
 
     offset = 0
     if song.playlist and song.random:
@@ -147,11 +160,10 @@ def play(sp, song: Song, button_index: int):
         print(f"Spotify API error: {e}")
         print(f"Device '{device_name}' may not be active yet — open Spotify and select it from the Connect menu first.")
         _active_button = None
-        return
+        return 'error'
     _active_button = button_index
     print(f"play: '{song.name}' on '{device_name}'")
-
-    return
+    return 'started'
 
 
 def __is_disabled():

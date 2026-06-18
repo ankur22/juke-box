@@ -18,6 +18,10 @@ def init():
     print("volume: ADS1115 ready on I2C 0x48")
 
 
+def last_volume():
+    return max(0, _last_volume)
+
+
 def _read_percent():
     volts = max(0.0, min(_VDD, _channel.voltage))
     return int(volts / _VDD * 100)
@@ -26,17 +30,19 @@ def _read_percent():
 def update(sp):
     global _last_volume
     if _channel is None:
-        return
+        return None
     try:
         vol = _read_percent()
     except Exception as e:
         print(f"volume: ADC read failed: {e}")
-        return
+        return None
     if abs(vol - _last_volume) < _DEADBAND:
-        return
+        return None
     try:
         sp.volume(vol)
         _last_volume = vol
         print(f"volume: {vol}%")
+        return vol
     except spotipy.exceptions.SpotifyException as e:
         print(f"volume: Spotify API error: {e}")
+        return None
