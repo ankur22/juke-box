@@ -2,6 +2,7 @@ import time
 import board
 from adafruit_neotrellis.neotrellis import NeoTrellis
 import spotify
+import volume
 from prometheus_client import start_http_server
 import signal
 import sys
@@ -42,6 +43,9 @@ sp = spotify.init()
 songs = spotify.get_songs(sp)
 
 is_init = True
+volume_enabled = False
+_VOLUME_POLL_INTERVAL = 0.5  # seconds
+_last_volume_poll = 0.0
 
 # this will be called when button events are received
 def blink(event):
@@ -95,10 +99,13 @@ def stop():
         time.sleep(0.05)
 
 def start():
+    global _last_volume_poll
     while True:
-        # call the sync function call any triggered callbacks
         trellis.sync()
-        # the trellis can only be read every 17 millisecons or so
+        now = time.monotonic()
+        if volume_enabled and now - _last_volume_poll >= _VOLUME_POLL_INTERVAL:
+            volume.update(sp)
+            _last_volume_poll = now
         time.sleep(0.02)
 
 
@@ -109,6 +116,11 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, sigterm_handler)
     try:
         start_http_server(8000)
+        try:
+            volume.init()
+            volume_enabled = True
+        except Exception as e:
+            print(f"volume: ADS1115 not found, volume knob disabled ({e})")
         init()
         is_init = False
         start()

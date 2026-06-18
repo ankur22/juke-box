@@ -61,6 +61,7 @@ fi
     spotipy \
     prometheus-client \
     adafruit-circuitpython-neotrellis \
+    adafruit-circuitpython-ads1x15 \
     Adafruit-Blinka
 
 sudo tee /etc/systemd/system/juke-box.service > /dev/null <<EOF
