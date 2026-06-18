@@ -405,7 +405,7 @@ Only after positive testing:
 5. **Playback target:** Pi itself via raspotify (Spotify Connect). Alexa still works by changing `LIVING_ROOM_DEVICE_NAME` in `secrets`.
 6. **Mono vs stereo:** Mono is sufficient for now.
 7. **Speaker:** Small mono speaker, 4Ω / 3W.
-8. **Battery life:** Not yet measured with the full stack; PiSugar 3 target.
+8. **Battery life:** ~1.5 hours measured (Pi Zero 2 W + PiSugar 3 + NeoTrellis + MAX98357A amp + speaker, WiFi on, Spotify Connect streaming). Tested 2026-06-16.
 9. **Offline playback:** Deferred — online Spotify Connect works well enough for now.
 10. **Music files:** Playlists configured per-device in the `songs` file.
 11. **Product form:** Prototype / hobby project for now.
